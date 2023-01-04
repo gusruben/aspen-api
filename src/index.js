@@ -22,7 +22,7 @@ class Aspen {
         // initial request to create a new JSESSIONID cookie, which is needed
         // for the rest of the requests (not part of the login, though), and to
         // get the Apache Struts HTML token (something else it uses to log in)
-        axios.get(this.rootURL, {headers: this.headers}).then((resp) => {
+        axios.get(this.rootURL, { headers: this.headers }).then((resp) => {
             // extract JSESSIONID cookie (as well as non-necessary cookies)
             resp.headers["set-cookie"].forEach((cookie) => {
                 // split at first equal sign
@@ -34,9 +34,23 @@ class Aspen {
 
             // create dom object to extract apache struts token from form
             const dom = new JSDOM(resp.data);
-            this.strutsToken = dom.window.document.querySelector(
-                "[name='org.apache.struts.taglib.html.TOKEN']"
-            ).value;
+            const form =
+                dom.window.document.querySelector("[name='logonForm']");
+            const formData = new dom.window.FormData(form);
+
+            this.strutsToken = formData.get(
+                "org.apache.struts.taglib.html.TOKEN"
+            );
+
+            // create form parameters for the login form
+            const loginParams = new URLSearchParams(formData);
+            // this doesn't need to do anything with the output, server-side
+            // aspen will give the JSESSIONID cookie more permissions and stuff
+            axios.post(
+                this.rootURL + "/aspen/logon.do",
+                loginParams,
+                { headers: this.headers },
+            );
         });
     }
 }

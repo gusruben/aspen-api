@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.2.2",
-    "jsdom": "^20.0.3",
-    "user-agents": "^1.0.1250"
+    "header-generator": "^2.1.7",
+    "jsdom": "^20.0.3"
   }
 }

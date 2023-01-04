@@ -1,11 +1,12 @@
 const axios = require("axios").default;
 const { JSDOM } = require("jsdom");
+const { HeaderGenerator, PRESETS } = require("header-generator");
 
 class Aspen {
     rootURL;
     cookies = {};
     strutsToken; // apache struts token (org.apache.struts.taglib.html.TOKEN)
-    userAgent = new UserAgent().toString();
+    headers = new HeaderGenerator(PRESETS.MODERN_WINDOWS_CHROME).getHeaders();
 
     /**
      * Creates the Aspen session object, and logs in using the supplied username/password
@@ -21,7 +22,7 @@ class Aspen {
         // initial request to create a new JSESSIONID cookie, which is needed
         // for the rest of the requests (not part of the login, though), and to
         // get the Apache Struts HTML token (something else it uses to log in)
-        axios.get(this.rootURL).then((resp) => {
+        axios.get(this.rootURL, {headers: this.headers}).then((resp) => {
             // extract JSESSIONID cookie (as well as non-necessary cookies)
             resp.headers["set-cookie"].forEach((cookie) => {
                 // split at first equal sign

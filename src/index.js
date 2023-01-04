@@ -1,10 +1,11 @@
-import axios from "axios";
-import { JSDOM } from "jsdom";
+const axios = require("axios").default;
+const { JSDOM } = require("jsdom");
 
 class Aspen {
     rootURL;
     cookies = {};
     strutsToken; // apache struts token (org.apache.struts.taglib.html.TOKEN)
+    userAgent = new UserAgent().toString();
 
     /**
      * Creates the Aspen session object, and logs in using the supplied username/password
@@ -39,4 +40,4 @@ class Aspen {
     }
 }
 
-export default Aspen;
+module.exports = Aspen;

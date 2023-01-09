@@ -3,7 +3,6 @@ const { JSDOM } = require("jsdom");
 const { HeaderGenerator, PRESETS } = require("header-generator");
 
 class Aspen {
-    cookies;
     session; // axios session
 
     /**
@@ -33,7 +32,8 @@ class Aspen {
         // get the Apache Struts HTML token (something else it uses to log in)
         const initialResponse = await this.session.get("/");
         // get initial cookies
-        this.cookies = initialResponse.headers["set-cookie"];
+        this.session.defaults.headers["Cookie"] =
+            initialResponse.headers["set-cookie"];
 
         // create dom object to extract additional form fields
         const dom = new JSDOM(initialResponse.data);
@@ -49,17 +49,7 @@ class Aspen {
         const loginParams = new URLSearchParams(formData);
         // this doesn't need to do anything with the output, server-side
         // aspen will give the JSESSIONID cookie more permissions and stuff
-        await this.session.post("/aspen/logon.do", loginParams, {
-            headers: {
-                Connection: "keep-alive",
-                Pragma: "no-cache",
-                "Cache-Control": "no-cache",
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent":
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
-                Cookie: this.cookies,
-            },
-        });
+        await this.session.post("/aspen/logon.do", loginParams);
     }
 }
 

@@ -49,7 +49,7 @@ class Aspen {
         await this.session.post("/aspen/logon.do", loginParams);
     }
 
-    async getClassData() {
+    async getClasses() {
         const resp = await this.session.get(
             "/aspen/portalClassList.do?navkey=academics.classes.list"
         );

@@ -14,9 +14,7 @@ class Aspen {
         // or anything like that, just repeats the same config automatically
         this.session = axios.create({
             baseURL: `https://${id}.myfollett.com/`,
-            headers: new HeaderGenerator(
-                PRESETS.MODERN_WINDOWS_CHROME
-            ).getHeaders(),
+            headers: new HeaderGenerator(PRESETS.MODERN_WINDOWS_CHROME).getHeaders(),
         });
     }
 
@@ -32,8 +30,7 @@ class Aspen {
         // get the Apache Struts HTML token (something else it uses to log in)
         const initialResponse = await this.session.get("/");
         // get initial cookies
-        this.session.defaults.headers["Cookie"] =
-            initialResponse.headers["set-cookie"];
+        this.session.defaults.headers["Cookie"] = initialResponse.headers["set-cookie"];
 
         // create dom object to extract additional form fields
         const dom = new JSDOM(initialResponse.data);
@@ -50,6 +47,59 @@ class Aspen {
         // this doesn't need to do anything with the output, server-side
         // aspen will give the JSESSIONID cookie more permissions and stuff
         await this.session.post("/aspen/logon.do", loginParams);
+    }
+
+    async getClassData() {
+        const resp = await this.session.get(
+            "/aspen/portalClassList.do?navkey=academics.classes.list"
+        );
+        const dom = new JSDOM(resp.data);
+
+        // which values in the table row correspond to what fields
+        const classDataFields = [
+            null, // checkbox
+            "name", // course name
+            "course", // course id
+            "term", // what term the course lasts for, FY for full year
+            "teacher", // teacher name (first, last)
+            "email", // teacher email
+            "classroom", // class room number
+            null, // the column header is 'Name', but it has the name of my school? useless info either way
+            "grade", // number grade, letterGrade is set manually in the loop
+            "absences", // amount of absences
+            "tardies", // amount of tardies
+            null, // unknown, header is 'Dsm' but all are zero
+        ];
+
+        const classListData = [];
+        for (const classRow of dom.window.document.querySelectorAll("#dataGrid .listCell")) {
+            const classData = {}
+            const children = Array.from(classRow.children);
+            children.forEach((elem, i) => {
+                const field = classDataFields[i];
+                if (!field) return; // if the field is null (not good data), skip it
+
+                let data = elem.textContent.trim();
+                // special cases for some values
+                if (field === "grade") {
+                    // extract number grade and letter grade seperately
+                    let grade = data.split(" ");
+                    data = Number(grade[0]);
+                    classData["letterGrade"] = grade[1];
+                }
+
+                // check if the string is parseable as a number
+                if (!isNaN(data) && !isNaN(parseFloat(data))) {
+                    data = Number(data);
+                }
+
+                classData[field] = data;
+            });
+
+            classListData.push(classData)
+        }
+
+        return classListData;
     }
 }
 

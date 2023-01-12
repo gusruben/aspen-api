@@ -2,6 +2,7 @@ const axios = require("axios").default;
 const { JSDOM } = require("jsdom");
 const { HeaderGenerator, PRESETS } = require("header-generator");
 
+/** A class representing an Aspen session */
 class Aspen {
     session; // axios session
 
@@ -49,6 +50,11 @@ class Aspen {
         await this.session.post("/aspen/logon.do", loginParams);
     }
 
+    /**
+     * Gets a list of all the classes, along with data about them.
+     * 
+     * @returns {Array} The array of classes
+     */
     async getClasses() {
         const resp = await this.session.get(
             "/aspen/portalClassList.do?navkey=academics.classes.list"

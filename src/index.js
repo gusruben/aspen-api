@@ -4,7 +4,7 @@ const { HeaderGenerator, PRESETS } = require("header-generator");
 
 /** A class representing an Aspen session */
 class Aspen {
-    session; // axios session
+    api; // axios session
     classPage; // JSDOM object with the class list page, for sending form data
 
     /**
@@ -15,7 +15,7 @@ class Aspen {
 
         // initialize axios http session ('instance), this doesn't store cookies
         // or anything like that, just repeats the same config automatically
-        this.session = axios.create({
+        this.api = axios.create({
             baseURL: `https://${id}.myfollett.com:443`,
             headers: new HeaderGenerator(
                 PRESETS.MODERN_WINDOWS_CHROME
@@ -33,10 +33,10 @@ class Aspen {
         // initial request to create a new JSESSIONID cookie, which is needed
         // for the rest of the requests (not part of the login, though), and to
         // get the Apache Struts HTML token (something else it uses to log in)
-        const initialResponse = await this.session.get("/");
+        const initialResponse = await this.api.get("/");
 
         // get initial cookies
-        this.session.defaults.headers["Cookie"] =
+        this.api.defaults.headers["Cookie"] =
             initialResponse.headers["set-cookie"];
 
         // create dom object to extract additional form fields
@@ -53,7 +53,7 @@ class Aspen {
         const loginParams = new URLSearchParams(formData);
         // this doesn't need to do anything with the output, server-side
         // aspen will give the JSESSIONID cookie more permissions and stuff
-        await this.session.post("/aspen/logon.do", loginParams);
+        await this.api.post("/aspen/logon.do", loginParams);
     }
 
     /**
@@ -62,7 +62,7 @@ class Aspen {
      * @returns {Array} The array of classes
      */
     async getClasses() {
-        const resp = await this.session.get(
+        const resp = await this.api.get(
             "/aspen/portalClassList.do?navkey=academics.classes.list"
         );
         this.classPage = new JSDOM(resp.data).window;
@@ -129,7 +129,7 @@ class Aspen {
     async getClass(token) {
         if (!this.classPage) {
             this.classPage = new JSDOM(
-                await this.session.get(
+                await this.api.get(
                     "/aspen/portalClassList.do?navkey=academics.classes.list"
                 )
             ).window;
@@ -145,7 +145,7 @@ class Aspen {
 
         // the request for the class detail page
         const doc = new JSDOM(
-            (await this.session.post("/aspen/portalClassList.do", params)).data
+            (await this.api.post("/aspen/portalClassList.do", params)).data
         ).window.document;
         const classData = {
             attendance: {},

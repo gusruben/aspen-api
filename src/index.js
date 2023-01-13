@@ -78,9 +78,9 @@ class Aspen {
             "classroom", // class room number
             null, // the column header is 'Name', but it has the name of my school? useless info either way
             "grade", // number grade, letterGrade is set manually in the loop
-            "absences", // amount of absences
-            "tardies", // amount of tardies
-            null, // unknown, header is 'Dsm' but all are zero,
+            "absent", // amount of absences
+            "tardy", // amount of tardies
+            "dismissed", // amount of 'dismissed' [absences?]
         ];
 
         const classListData = []; // output list with all the classes

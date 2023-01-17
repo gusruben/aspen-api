@@ -12,7 +12,6 @@ class Aspen {
      * @param {String} id The ID of the Aspen instance to access, in {id}.myfollett.com
      */
     constructor(id) {
-
         // initialize axios http session ('instance), this doesn't store cookies
         // or anything like that, just repeats the same config automatically
         this.api = axios.create({
@@ -127,26 +126,12 @@ class Aspen {
      * @returns An object containing data about the class
      */
     async getClass(token) {
-        if (!this.classPage) {
-            this.classPage = new JSDOM(
-                await this.api.get(
-                    "/aspen/portalClassList.do?navkey=academics.classes.list"
-                )
-            ).window;
-        }
-
-        const form = new this.classPage.FormData(
-            this.classPage.document.querySelector("[name='classListForm']")
-        );
-
-        form.set("userEvent", 2100); // userEvent ID for getting class info (i think)
-        form.set("userParam", token); // userParam has the class token
-        const params = new URLSearchParams(form);
+        // after sending this request, all of the following requests will
+        // automatically relate to the class, even though they don't have the token
+        const html = await this.#loadClass(token);
 
         // the request for the class detail page
-        const doc = new JSDOM(
-            (await this.api.post("/aspen/portalClassList.do", params)).data
-        ).window.document;
+        const doc = new JSDOM(html).window.document;
         const classData = {
             attendance: {},
             grades: {
@@ -260,6 +245,35 @@ class Aspen {
         });
 
         return classData;
+    }
+
+    /**
+     *
+     * @param {String} token the id ('token') of the class
+     * @returns {String} the HTML of the class's page
+     */
+    async #loadClass(token) {
+        // class list page has a form on it to select the class
+        if (!this.classPage) {
+            this.classPage = new JSDOM(
+                await this.api.get(
+                    "/aspen/portalClassList.do?navkey=academics.classes.list"
+                )
+            ).window;
+        }
+
+        // sending this form with the class token 'selects' the class, so that
+        // the following requests will be in relation to that class (even though
+        // the requests don't have information relating to that class)
+        const form = new this.classPage.FormData(
+            this.classPage.document.querySelector("[name='classListForm']")
+        );
+
+        form.set("userEvent", 2100); // userEvent ID for getting class info (i think)
+        form.set("userParam", token); // userParam has the class token
+        const params = new URLSearchParams(form);
+
+        return (await this.api.post("/aspen/portalClassList.do", params)).data;
     }
 }
 

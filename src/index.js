@@ -255,11 +255,10 @@ class Aspen {
     async #loadClass(token) {
         // class list page has a form on it to select the class
         if (!this.classPage) {
-            this.classPage = new JSDOM(
-                await this.api.get(
-                    "/aspen/portalClassList.do?navkey=academics.classes.list"
-                )
-            ).window;
+            const resp = await this.api.get(
+                "/aspen/portalClassList.do?navkey=academics.classes.list"
+            );
+            this.classPage = new JSDOM(resp.data).window;
         }
 
         // sending this form with the class token 'selects' the class, so that

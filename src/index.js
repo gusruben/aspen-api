@@ -247,6 +247,100 @@ class Aspen {
         return classData;
     }
 
+    async getAssignments(token) {
+        // after sending this request, all of the following requests will
+        // automatically relate to the class, even though they don't have the token
+        await this.#loadClass(token);
+
+        // output variable
+        const assignmentData = [];
+
+        // get the assignments page
+        const resp = await this.api.get(
+            "/aspen/portalAssignmentList.do?navkey=academics.classes.list.gcd"
+        );
+        const page = new JSDOM(resp.data).window;
+
+        // row in a table for each of the assignments
+        const rows = page.document.querySelectorAll("#dataGrid tr.listCell");
+
+        // map from what fields in a table row are what fields in the output var
+        const assignmentFields = [
+            null, // checkbox
+            "name",
+            "dateAssigned",
+            "dateDue",
+            "schedule", // for some reason, what days of the week that class is?
+            "grade", // special, has 3 values (percentage, score, and points), see code for more info
+            "feedback",
+        ];
+
+        Array.from(rows).forEach((row, rowIndex) => {
+            assignmentData[rowIndex] = {};
+
+            Array.from(row.children).forEach((elem, columnIndex) => {
+                let field = assignmentFields[columnIndex];
+                if (!field) return; // ignore 'null'
+
+                // variable for the data inside that element, there are some special cases
+                let data = elem.textContent.trim();
+
+                // special cases
+                if (field == "grade") {
+                    // inside the grade column is another table, with three rows,
+                    // each for different values
+                    // if there's only 1 row, it's ungraded
+                    if (elem.querySelectorAll("td").length == 1) {
+                        data =
+                            assignmentData[rowIndex].score =
+                            assignmentData[rowIndex].points =
+                                elem.textContent.trim();
+                    } else {
+                        Array.from(elem.querySelectorAll("td")).forEach(
+                            (gradeElem, i) => {
+                                // the first element is the grade %
+                                if (i == 0) {
+                                    data = Number(
+                                        gradeElem.textContent
+                                            .trim()
+                                            .slice(0, -1)
+                                    );
+
+                                    // the second element is the points out of the total
+                                } else if (i == 1) {
+                                    assignmentData[rowIndex].score =
+                                        gradeElem.textContent.trim();
+
+                                    // the third elem is the points, or 'WS' if it's missin
+                                } else if (i == 2) {
+                                    let points = gradeElem.textContent
+                                        .trim()
+                                        .slice(1, -1); // cut off the parenthesis
+
+                                    // if it's a number
+                                    if (
+                                        !isNaN(points) &&
+                                        !isNaN(parseFloat(points))
+                                    ) {
+                                        assignmentData[rowIndex].points =
+                                            Number(points);
+                                    } else {
+                                        // otherwise just set the string
+                                        assignmentData[rowIndex].points = points;
+                                    }
+                                }
+                            }
+                        );
+                    }
+                }
+
+                assignmentData[rowIndex][field] = data;
+            });
+        });
+
+        return assignmentData;
+    }
+
     /**
      *
      * @param {String} token the id ('token') of the class

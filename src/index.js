@@ -1,6 +1,6 @@
-const axios = require("axios").default;
-const { JSDOM } = require("jsdom");
-const { HeaderGenerator, PRESETS } = require("header-generator");
+import axios from "axios";
+import { JSDOM } from "jsdom";
+import { HeaderGenerator, PRESETS } from "header-generator";
 
 /** A class representing an Aspen session */
 class Aspen {
@@ -370,4 +370,4 @@ class Aspen {
     }
 }
 
-module.exports = Aspen;
+export default Aspen;

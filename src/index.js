@@ -261,6 +261,11 @@ class Aspen {
         return classData;
     }
 
+    /**
+     * Gets the list of assignments from a class.
+     * @param {String} token The token of the class (similar to an ID), from the getClasses() function
+     * @returns A list containing the assignments of the class
+     */
     async getAssignments(token) {
         // after sending this request, all of the following requests will
         // automatically relate to the class, even though they don't have the token

@@ -1,10 +1,13 @@
-import axios from "axios";
+import got from "got";
+import { CookieJar } from "tough-cookie";
 import { JSDOM } from "jsdom";
 import { HeaderGenerator, PRESETS } from "header-generator";
 
 /** A class representing an Aspen session */
 class Aspen {
-    api; // axios session
+    api; // Got session
+    instanceId; // the ID of the aspen instance
+    cookieJar; // cookies
     classPage; // JSDOM object with the class list page, for sending form data
 
     /**
@@ -12,13 +15,15 @@ class Aspen {
      * @param {String} id The ID of the Aspen instance to access, in {id}.myfollett.com
      */
     constructor(id) {
-        // initialize axios http session ('instance), this doesn't store cookies
-        // or anything like that, just repeats the same config automatically
-        this.api = axios.create({
-            baseURL: `https://${id}.myfollett.com:443`,
+        this.instanceId = id;
+        this.cookieJar = new CookieJar();
+        // initialize Got http session ('instance), this  just repeats the same config automatically
+        this.api = got.extend({
+            prefixUrl: `https://${id}.myfollett.com/aspen`,
             headers: new HeaderGenerator(
                 PRESETS.MODERN_WINDOWS_CHROME
             ).getHeaders(),
+            cookieJar: this.cookieJar,
         });
     }
 
@@ -32,14 +37,18 @@ class Aspen {
         // initial request to create a new JSESSIONID cookie, which is needed
         // for the rest of the requests (not part of the login, though), and to
         // get the Apache Struts HTML token (something else it uses to log in)
-        const initialResponse = await this.api.get("/");
+        const initialResponse = await this.api.get("logon.do");
 
-        // get initial cookies
-        this.api.defaults.headers["Cookie"] =
-            initialResponse.headers["set-cookie"];
+        // get initial cookies and add them to the cookie jar
+        for (let cookie of initialResponse.headers["set-cookie"]) {
+            await this.cookieJar.setCookie(
+                cookie,
+                `https://${this.instanceId}.myfollett.com`
+            );
+        }
 
         // create dom object to extract additional form fields
-        const dom = new JSDOM(initialResponse.data);
+        const dom = new JSDOM(initialResponse.body);
         const form = dom.window.document.querySelector("[name='logonForm']");
         const formData = new dom.window.FormData(form);
 
@@ -48,11 +57,25 @@ class Aspen {
         formData.set("username", options.username);
         formData.set("password", options.password);
 
-        // create form parameters for the login form
-        const loginParams = new URLSearchParams(formData);
+        // create form parameters for the login form (converted to a raw JSON object)
+        const loginParams = Object.fromEntries(new URLSearchParams(formData));
+
         // this doesn't need to do anything with the output, server-side
         // aspen will give the JSESSIONID cookie more permissions and stuff
-        await this.api.post("/aspen/logon.do", loginParams);
+        try {
+            await this.api.post("logon.do", {
+                cookieJar: this.cookieJar,
+                form: loginParams,
+            });
+        } catch (err) {
+            // because of what might be a Got bug, when the server redirects to /aspen/home.do, got
+            // will send a POST request instead of a GET request (to /aspen/home.do). This will
+            // cause the server to respond with a 502 error, but we can just ignore that. If it's
+            // another error, though, we'll throw it anyway, because something else went wrong
+            if (err.code != "ERR_NON_2XX_3XX_RESPONSE") {
+                throw err;
+            }
+        }
     }
 
     /**
@@ -62,9 +85,9 @@ class Aspen {
      */
     async getClasses() {
         const resp = await this.api.get(
-            "/aspen/portalClassList.do?navkey=academics.classes.list"
+            "portalClassList.do?navkey=academics.classes.list"
         );
-        this.classPage = new JSDOM(resp.data).window;
+        this.classPage = new JSDOM(resp.body).window;
 
         // which values in the table row correspond to what fields
         const classDataFields = [
@@ -257,9 +280,9 @@ class Aspen {
 
         // get the assignments page
         const resp = await this.api.get(
-            "/aspen/portalAssignmentList.do?navkey=academics.classes.list.gcd"
+            "portalAssignmentList.do?navkey=academics.classes.list.gcd"
         );
-        const page = new JSDOM(resp.data).window;
+        const page = new JSDOM(resp.body).window;
 
         // row in a table for each of the assignments
         const rows = page.document.querySelectorAll("#dataGrid tr.listCell");
@@ -326,7 +349,8 @@ class Aspen {
                                             Number(points);
                                     } else {
                                         // otherwise just set the string
-                                        assignmentData[rowIndex].points = points;
+                                        assignmentData[rowIndex].points =
+                                            points;
                                     }
                                 }
                             }
@@ -350,9 +374,9 @@ class Aspen {
         // class list page has a form on it to select the class
         if (!this.classPage) {
             const resp = await this.api.get(
-                "/aspen/portalClassList.do?navkey=academics.classes.list"
+                "portalClassList.do?navkey=academics.classes.list"
             );
-            this.classPage = new JSDOM(resp.data).window;
+            this.classPage = new JSDOM(resp.body).window;
         }
 
         // sending this form with the class token 'selects' the class, so that
@@ -366,7 +390,7 @@ class Aspen {
         form.set("userParam", token); // userParam has the class token
         const params = new URLSearchParams(form);
 
-        return (await this.api.post("/aspen/portalClassList.do", params)).data;
+        return (await this.api.post("portalClassList.do", params)).body;
     }
 }
 

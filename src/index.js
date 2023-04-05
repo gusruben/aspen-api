@@ -24,6 +24,7 @@ class Aspen {
                 PRESETS.MODERN_WINDOWS_CHROME
             ).getHeaders(),
             cookieJar: this.cookieJar,
+            methodRewriting: true,
         });
     }
 
@@ -58,24 +59,14 @@ class Aspen {
         formData.set("password", options.password);
 
         // create form parameters for the login form (converted to a raw JSON object)
-        const loginParams = Object.fromEntries(new URLSearchParams(formData));
+        const loginParams = Object.fromEntries(formData);
 
         // this doesn't need to do anything with the output, server-side
         // aspen will give the JSESSIONID cookie more permissions and stuff
-        try {
-            await this.api.post("logon.do", {
-                cookieJar: this.cookieJar,
-                form: loginParams,
-            });
-        } catch (err) {
-            // because of what might be a Got bug, when the server redirects to /aspen/home.do, got
-            // will send a POST request instead of a GET request (to /aspen/home.do). This will
-            // cause the server to respond with a 502 error, but we can just ignore that. If it's
-            // another error, though, we'll throw it anyway, because something else went wrong
-            if (err.code != "ERR_NON_2XX_3XX_RESPONSE") {
-                throw err;
-            }
-        }
+        await this.api.post("logon.do", {
+            cookieJar: this.cookieJar,
+            form: loginParams,
+        });
     }
 
     /**
@@ -388,9 +379,10 @@ class Aspen {
 
         form.set("userEvent", 2100); // userEvent ID for getting class info (i think)
         form.set("userParam", token); // userParam has the class token
-        const params = new URLSearchParams(form);
+        const params = Object.fromEntries(form);
 
-        return (await this.api.post("portalClassList.do", params)).body;
+        return (await this.api.post("portalClassList.do", { form: params }))
+            .body;
     }
 }
 

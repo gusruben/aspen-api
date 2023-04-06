@@ -362,7 +362,7 @@ class Aspen {
     }
 
     /**
-     *
+     * Requests a class's page to switch Aspen's 'focus'
      * @param {String} token the id ('token') of the class
      * @returns {String} the HTML of the class's page
      */
@@ -390,6 +390,10 @@ class Aspen {
             .body;
     }
 
+    /**
+     * Gets the current schedule of the current student
+     * @returns The student's current schedule, as a JSON
+     */
     async getSchedule() {
         const schedulePage = await this.api.get(
             "studentScheduleContextList.do?navkey=myInfo.sch.list"

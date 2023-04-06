@@ -389,6 +389,93 @@ class Aspen {
         return (await this.api.post("portalClassList.do", { form: params }))
             .body;
     }
+
+    async getSchedule() {
+        const schedulePage = await this.api.get(
+            "studentScheduleContextList.do?navkey=myInfo.sch.list"
+        );
+        const page = new JSDOM(schedulePage.body).window;
+
+        // create an initial objetc, where each key is a day and the value is an array of the
+        // classes on that day
+        const schedule = {
+            currentDay: null,
+            currentClass: null,
+        };
+
+        // initialize the 'day' keys in the object by getting them from the page (using the page is)
+        // necessary to work with systems like 'friday 1' and 'friday 2'
+        const headers = page.document.querySelectorAll(
+            ".inputGridHeader.inputGridColumnHeader"
+        );
+        headers.forEach(header => {
+            // for whatever reason, innerText isn't implemented in JSDOM
+            const dayID = header.textContent.trim().split(/\s/g)[0]; // the format is 'ID - Name', ex: "M - Monday"
+
+            // if it's the current day (specified by the element having a red border), set that
+            // in the schedule object
+            if (header.getAttribute("style").includes("red")) {
+                schedule.currentDay = dayID;
+            }
+
+            schedule[dayID] = [];
+        });
+
+        // this is the list of values that each entry in the schedule table stores. They are
+        // separated by <br>.
+        const classDataKeys = [
+            "course", // course ID
+            "name", // course name
+            "teacher", // teacher name
+            "room", // room #
+        ];
+
+        // loop through each of the columns in the table, by selecting td elements that are the
+        // first child, then the second child, etc. Note that it actually starts by selecting the
+        // second child, because the first column is just the period number. Starting with the
+        // second child also ignores any other random tables scattered across the page with only one
+        // element.
+
+        // get a static copy before the loop so that when 'currentClass' is set it doesn't break
+        const safeSchedule = { ...schedule };
+        // also remove these to not cause issues
+        delete safeSchedule.currentDay;
+        delete safeSchedule.currentClass;
+
+        for (let i = 0; i < Object.keys(safeSchedule).length; i++) {
+            const day = Object.keys(safeSchedule)[i]; // the code for the day
+
+            const dayClasses = page.document.querySelectorAll(
+                `.listGridFixed td:nth-child(${i + 2}) td`
+            );
+            // for each of the classes, fill out the data
+            for (const classElem of dayClasses) {
+                const rawClassData = classElem.innerHTML.trim().split("<br>");
+                const classData = {};
+                // this loop fills the data into the classData variable, with the respective keys
+                classDataKeys.forEach((key, index) => {
+                    classData[key] = rawClassData[index];
+                });
+
+                // if it's the current period, set it in classData and schedule (it'll have a red
+                // border if it's the current period)
+                if (
+                    classElem.parentElement.parentElement.parentElement
+                        .getAttribute("style")
+                ) {
+                    classData.currentPeriod = true;
+                    schedule.currentClass = classData;
+                } else {
+                    classData.currentPeriod = false;
+                }
+
+                // add the class to the main schedule object (for the current day)
+                schedule[day].push(classData);
+            }
+        }
+
+        return schedule;
+    }
 }
 
 export default Aspen;

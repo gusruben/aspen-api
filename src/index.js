@@ -158,10 +158,8 @@ class Aspen {
 
         // metadata (teacher, room #, etc)
         const metadataFields = ["teacher", "email", "room"]; // null fields are for labels
-        let metadataElems = Array.from(
-            doc.querySelectorAll(
-                "#collapsibleDiv0  tr:nth-child(2) td.detailValue"
-            )
+        let metadataElems = doc.querySelectorAll(
+            "#collapsibleDiv0  tr:nth-child(2) td.detailValue"
         );
         metadataElems.forEach((elem, i) => {
             if (metadataFields[i]) {
@@ -173,9 +171,7 @@ class Aspen {
         // attendance data
         const attendanceFields = ["absent", "tardy", "dismissed"]; // the fields in the table
         // #dataGridLeft is the attendance table
-        let attendanceRows = Array.from(
-            doc.querySelectorAll("#dataGridLeft tr.listCell")
-        );
+        let attendanceRows = doc.querySelectorAll("#dataGridLeft tr.listCell");
         attendanceRows.forEach((row, rowIndex) => {
             // create an object called 'absent', 'tardy', or 'dismissed' based on the index
             let currentField = attendanceFields[rowIndex];
@@ -294,7 +290,7 @@ class Aspen {
             "feedback",
         ];
 
-        Array.from(rows).forEach((row, rowIndex) => {
+        rows.forEach((row, rowIndex) => {
             assignmentData[rowIndex] = {};
 
             Array.from(row.children).forEach((elem, columnIndex) => {
@@ -315,42 +311,37 @@ class Aspen {
                             assignmentData[rowIndex].points =
                                 elem.textContent.trim();
                     } else {
-                        Array.from(elem.querySelectorAll("td")).forEach(
-                            (gradeElem, i) => {
-                                // the first element is the grade %
-                                if (i == 0) {
-                                    data = Number(
-                                        gradeElem.textContent
-                                            .trim()
-                                            .slice(0, -1)
-                                    );
+                        elem.querySelectorAll("td").forEach((gradeElem, i) => {
+                            // the first element is the grade %
+                            if (i == 0) {
+                                data = Number(
+                                    gradeElem.textContent.trim().slice(0, -1)
+                                );
 
-                                    // the second element is the points out of the total
-                                } else if (i == 1) {
-                                    assignmentData[rowIndex].score =
-                                        gradeElem.textContent.trim();
+                                // the second element is the points out of the total
+                            } else if (i == 1) {
+                                assignmentData[rowIndex].score =
+                                    gradeElem.textContent.trim();
 
-                                    // the third elem is the points, or 'WS' if it's missin
-                                } else if (i == 2) {
-                                    let points = gradeElem.textContent
-                                        .trim()
-                                        .slice(1, -1); // cut off the parenthesis
+                                // the third elem is the points, or 'WS' if it's missin
+                            } else if (i == 2) {
+                                let points = gradeElem.textContent
+                                    .trim()
+                                    .slice(1, -1); // cut off the parenthesis
 
-                                    // if it's a number
-                                    if (
-                                        !isNaN(points) &&
-                                        !isNaN(parseFloat(points))
-                                    ) {
-                                        assignmentData[rowIndex].points =
-                                            Number(points);
-                                    } else {
-                                        // otherwise just set the string
-                                        assignmentData[rowIndex].points =
-                                            points;
-                                    }
+                                // if it's a number
+                                if (
+                                    !isNaN(points) &&
+                                    !isNaN(parseFloat(points))
+                                ) {
+                                    assignmentData[rowIndex].points =
+                                        Number(points);
+                                } else {
+                                    // otherwise just set the string
+                                    assignmentData[rowIndex].points = points;
                                 }
                             }
-                        );
+                        });
                     }
                 }
 
@@ -464,8 +455,9 @@ class Aspen {
                 // if it's the current period, set it in classData and schedule (it'll have a red
                 // border if it's the current period)
                 if (
-                    classElem.parentElement.parentElement.parentElement
-                        .getAttribute("style")
+                    classElem.parentElement.parentElement.parentElement.getAttribute(
+                        "style"
+                    )
                 ) {
                     classData.currentPeriod = true;
                     schedule.currentClass = classData;

@@ -14,9 +14,18 @@ class Aspen {
      * Creates the Aspen session object
      * @param {String} id The ID of the Aspen instance to access, in {id}.myfollett.com
      */
-    constructor(id) {
+    constructor(id, cookies = []) {
         this.instanceId = id;
         this.cookieJar = new CookieJar();
+
+        // if cookies is set, then use that to fill the cookie jar
+        for (let cookie of cookies) {
+            this.cookieJar.setCookieSync(
+                cookie,
+                `https://${id}.myfollett.com`
+            )
+        }
+
         // initialize Got http session ('instance), this  just repeats the same config automatically
         this.api = got.extend({
             prefixUrl: `https://${id}.myfollett.com/aspen`,

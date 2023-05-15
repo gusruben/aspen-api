@@ -10,6 +10,8 @@
   "author": "gusruben",
   "license": "ISC",
   "dependencies": {
+    "@types/jsdom": "^21.1.1",
+    "@types/tough-cookie": "^4.0.2",
     "axios": "^1.2.2",
     "got": "^12.6.0",
     "header-generator": "^2.1.7",

@@ -1,20 +1,21 @@
-import got from "got";
-import { CookieJar } from "tough-cookie";
+import got, { Got } from "got";
+import { Cookie, CookieJar } from "tough-cookie";
 import { JSDOM } from "jsdom";
-import { HeaderGenerator, PRESETS } from "header-generator";
+import { HeaderGenerator, HeaderGeneratorOptions, PRESETS } from "header-generator";
+import { DOMWindow } from "jsdom";
 
 /** A class representing an Aspen session */
 class Aspen {
-    api; // Got session
-    instanceId; // the ID of the aspen instance
-    cookieJar; // cookies
-    classPage; // JSDOM object with the class list page, for sending form data
+    api: Got; // Got session
+    instanceId: string; // the ID of the aspen instance
+    cookieJar: CookieJar; // cookies
+    classPage: DOMWindow; // JSDOM object with the class list page, for sending form data
 
     /**
      * Creates the Aspen session object
      * @param {String} id The ID of the Aspen instance to access, in {id}.myfollett.com
      */
-    constructor(id, cookies = []) {
+    constructor(id: string, cookies: Cookie[] = []) {
         this.instanceId = id;
         this.cookieJar = new CookieJar();
 
@@ -30,7 +31,7 @@ class Aspen {
         this.api = got.extend({
             prefixUrl: `https://${id}.myfollett.com/aspen`,
             headers: new HeaderGenerator(
-                PRESETS.MODERN_WINDOWS_CHROME
+                PRESETS.MODERN_WINDOWS_CHROME as Partial<HeaderGeneratorOptions>
             ).getHeaders(),
             cookieJar: this.cookieJar,
             methodRewriting: true,
@@ -43,7 +44,7 @@ class Aspen {
      * @param {String} options.username The username to use to sign in to Aspen
      * @param {String} options.password The password to use to sign in to Aspen
      */
-    async login(options) {
+    async login(options: { username: string; password: string; }) {
         // initial request to create a new JSESSIONID cookie, which is needed
         // for the rest of the requests (not part of the login, though), and to
         // get the Apache Struts HTML token (something else it uses to log in)
@@ -59,7 +60,7 @@ class Aspen {
 
         // create dom object to extract additional form fields
         const dom = new JSDOM(initialResponse.body);
-        const form = dom.window.document.querySelector("[name='logonForm']");
+        const form = dom.window.document.querySelector("[name='logonForm']") as HTMLFormElement;
         const formData = new dom.window.FormData(form);
 
         // set the login values in the form data
@@ -83,7 +84,7 @@ class Aspen {
      *
      * @returns {Array} The array of classes
      */
-    async getClasses() {
+    async getClasses(): Promise<any[]> {
         const resp = await this.api.get(
             "portalClassList.do?navkey=academics.classes.list"
         );
@@ -116,7 +117,7 @@ class Aspen {
                 const field = classDataFields[i];
                 if (!field) return; // if the field is null (not good data), skip it
 
-                let data = elem.textContent.trim();
+                let data: number | string = elem.textContent.trim();
                 // special cases for some values
                 if (field == "token") {
                     // if it's the token, extract it from the ID of the input element
@@ -130,7 +131,7 @@ class Aspen {
                 }
 
                 // check if the string is parseable as a number
-                if (!isNaN(data) && !isNaN(parseFloat(data))) {
+                if (!isNaN(data as number) && !isNaN(parseFloat(data as string))) {
                     data = Number(data);
                 }
 
@@ -148,7 +149,7 @@ class Aspen {
      * @param {String} token The token of the class (similar to an ID), from the getClasses() function
      * @returns An object containing data about the class
      */
-    async getClass(token) {
+    async getClass(token: string) {
         // after sending this request, all of the following requests will
         // automatically relate to the class, even though they don't have the token
         const html = await this.#loadClass(token);
@@ -271,7 +272,7 @@ class Aspen {
      * @param {String} token The token of the class (similar to an ID), from the getClasses() function
      * @returns A list containing the assignments of the class
      */
-    async getAssignments(token) {
+    async getAssignments(token: string) {
         // after sending this request, all of the following requests will
         // automatically relate to the class, even though they don't have the token
         await this.#loadClass(token);
@@ -307,7 +308,7 @@ class Aspen {
                 if (!field) return; // ignore 'null'
 
                 // variable for the data inside that element, there are some special cases
-                let data = elem.textContent.trim();
+                let data: number | string  = elem.textContent.trim();
 
                 // special cases
                 if (field == "grade") {
@@ -340,7 +341,7 @@ class Aspen {
 
                                 // if it's a number
                                 if (
-                                    !isNaN(points) &&
+                                    !isNaN(Number(points)) &&
                                     !isNaN(parseFloat(points))
                                 ) {
                                     assignmentData[rowIndex].points =
@@ -366,7 +367,7 @@ class Aspen {
      * @param {String} token the id ('token') of the class
      * @returns {String} the HTML of the class's page
      */
-    async #loadClass(token) {
+    async #loadClass(token: string): Promise<string> {
         // class list page has a form on it to select the class
         if (!this.classPage) {
             const resp = await this.api.get(
@@ -382,7 +383,7 @@ class Aspen {
             this.classPage.document.querySelector("[name='classListForm']")
         );
 
-        form.set("userEvent", 2100); // userEvent ID for getting class info (i think)
+        form.set("userEvent", "2100"); // userEvent ID for getting class info (i think)
         form.set("userParam", token); // userParam has the class token
         const params = Object.fromEntries(form);
 
@@ -468,10 +469,10 @@ class Aspen {
                         "style"
                     )
                 ) {
-                    classData.currentPeriod = true;
+                    classData["currentPeriod"] = true;
                     schedule.currentClass = classData;
                 } else {
-                    classData.currentPeriod = false;
+                    classData["currentPeriod"] = false;
                 }
 
                 // add the class to the main schedule object (for the current day)

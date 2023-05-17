@@ -3,7 +3,7 @@ import { Cookie, CookieJar } from "tough-cookie";
 import { JSDOM } from "jsdom";
 import { HeaderGenerator, HeaderGeneratorOptions, PRESETS } from "header-generator";
 import { DOMWindow } from "jsdom";
-import { Assignment, ClassInfo, Day, Period, Schedule } from "./types";
+import { Assignment, ClassInfo, Day, Period, Schedule } from "./types.js";
 
 /** A class representing an Aspen session */
 class Aspen {

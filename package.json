@@ -2,7 +2,7 @@
   "name": "aspen-api",
   "version": "1.0.0",
   "description": "An API client library for interacting with Aspen, a Student Information System (SIS) created by Follett and used in schools around the U.S.",
-  "main": "src/index.js",
+  "exports": "./src/index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,7 +19,9 @@
     "tough-cookie": "^4.1.2"
   },
   "devDependencies": {
-    "@tsconfig/node18": "^2.0.1",
     "typescript": "^5.0.4"
+  },
+  "engines": {
+    "node": ">=16"
   }
 }

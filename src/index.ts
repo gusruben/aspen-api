@@ -3,6 +3,7 @@ import { Cookie, CookieJar } from "tough-cookie";
 import { JSDOM } from "jsdom";
 import { HeaderGenerator, HeaderGeneratorOptions, PRESETS } from "header-generator";
 import { DOMWindow } from "jsdom";
+import type { Assignment, ClassInfo, Day, Period, Schedule } from "./types";
 
 /** A class representing an Aspen session */
 class Aspen {
@@ -51,7 +52,7 @@ class Aspen {
         const initialResponse = await this.api.get("logon.do");
 
         // get initial cookies and add them to the cookie jar
-        for (let cookie of initialResponse.headers["set-cookie"]) {
+        for (let cookie of initialResponse.headers["set-cookie"] ?? []) {
             await this.cookieJar.setCookie(
                 cookie,
                 `https://${this.instanceId}.myfollett.com`
@@ -91,7 +92,7 @@ class Aspen {
         this.classPage = new JSDOM(resp.body).window;
 
         // which values in the table row correspond to what fields
-        const classDataFields = [
+        const classDataFields: (keyof ClassInfo | null)[] = [
             "token", // checkbox, with the ID / 'token' for the course (used for getting data)
             "name", // course name
             "course", // course id
@@ -106,18 +107,21 @@ class Aspen {
             "dismissed", // amount of 'dismissed' [absences?]
         ];
 
-        const classListData = []; // output list with all the classes
+        const classListData: ClassInfo[] = []; // output list with all the classes
         for (const classRow of this.classPage.document.querySelectorAll(
             "#dataGrid .listCell"
         )) {
-            const classData = {}; // output object for this class
+            // this should be a Partial<ClassInfo>, but when I do that, I get some really weird errors
+            // because I know that the types are going to be safe, I can set it as `any` and convert
+            // it to a ClassInfo later (once it's all filled).
+            const classInfo: any = {}; // output object for this class
 
             const children = Array.from(classRow.children);
             children.forEach((elem, i) => {
-                const field = classDataFields[i];
+                const field = classDataFields[i] as keyof ClassInfo;
                 if (!field) return; // if the field is null (not good data), skip it
 
-                let data: number | string = elem.textContent.trim();
+                let data: string | number = (elem.textContent as string).trim();
                 // special cases for some values
                 if (field == "token") {
                     // if it's the token, extract it from the ID of the input element
@@ -127,7 +131,7 @@ class Aspen {
                     // extract number grade and letter grade seperately
                     let grade = data.split(" ");
                     data = Number(grade[0]);
-                    classData["letterGrade"] = grade[1];
+                    classInfo["letterGrade"] = grade[1];
                 }
 
                 // check if the string is parseable as a number
@@ -135,10 +139,11 @@ class Aspen {
                     data = Number(data);
                 }
 
-                classData[field] = data;
+                // let x = classInfo[field]
+                classInfo[field] = data;
             });
 
-            classListData.push(classData);
+            classListData.push(classInfo as ClassInfo);
         }
 
         return classListData;
@@ -156,7 +161,9 @@ class Aspen {
 
         // the request for the class detail page
         const doc = new JSDOM(html).window.document;
-        const classData = {
+        // once gain, this needs to be `any` so that typescript is happy
+        // it gets converted to ClassData once it's full
+        const classData: any = {
             attendance: {},
             grades: {
                 1: { weights: {} },
@@ -174,7 +181,7 @@ class Aspen {
         metadataElems.forEach((elem, i) => {
             if (metadataFields[i]) {
                 // ignore null
-                classData[metadataFields[i]] = elem.textContent.trim();
+                classData[metadataFields[i]] = elem.textContent?.trim();
             }
         });
 
@@ -221,7 +228,7 @@ class Aspen {
                     // term is the term for these values
                     // extract the value
                     let val = null;
-                    if (elem.textContent.trim()) {
+                    if (elem.textContent?.trim()) {
                         val = Number.parseFloat(
                             elem.textContent.trim().slice(0, -1) // strip off % sign on the end
                         );
@@ -278,7 +285,7 @@ class Aspen {
         await this.#loadClass(token);
 
         // output variable
-        const assignmentData = [];
+        const assignmentData: Partial<Assignment>[] = [];
 
         // get the assignments page
         const resp = await this.api.get(
@@ -308,7 +315,7 @@ class Aspen {
                 if (!field) return; // ignore 'null'
 
                 // variable for the data inside that element, there are some special cases
-                let data: number | string  = elem.textContent.trim();
+                let data: number | string  = elem.textContent?.trim() as string;
 
                 // special cases
                 if (field == "grade") {
@@ -319,43 +326,39 @@ class Aspen {
                         data =
                             assignmentData[rowIndex].score =
                             assignmentData[rowIndex].points =
-                                elem.textContent.trim();
+                                "Ungraded";
                     } else {
                         elem.querySelectorAll("td").forEach((gradeElem, i) => {
                             // the first element is the grade %
                             if (i == 0) {
                                 data = Number(
-                                    gradeElem.textContent.trim().slice(0, -1)
+                                    gradeElem.textContent?.trim().slice(0, -1)
                                 );
 
                                 // the second element is the points out of the total
                             } else if (i == 1) {
                                 assignmentData[rowIndex].score =
-                                    gradeElem.textContent.trim();
+                                    gradeElem.textContent?.trim();
 
                                 // the third elem is the points, or 'WS' if it's missin
                             } else if (i == 2) {
                                 let points = gradeElem.textContent
-                                    .trim()
-                                    .slice(1, -1); // cut off the parenthesis
+                                    ?.trim()
+                                    .slice(1, -1) as string; // cut off the parenthesis
 
-                                // if it's a number
-                                if (
-                                    !isNaN(Number(points)) &&
-                                    !isNaN(parseFloat(points))
-                                ) {
-                                    assignmentData[rowIndex].points =
-                                        Number(points);
-                                } else {
-                                    // otherwise just set the string
-                                    assignmentData[rowIndex].points = points;
-                                }
+                                assignmentData[rowIndex].points =
+                                    Number(points);
                             }
                         });
                     }
                 }
 
-                assignmentData[rowIndex][field] = data;
+                // this is a bit of a dumb hack
+                // typescript isn't sure that field is a key of Partial<Assignment>
+                // and for some reason it won't accept it if we tell it that it is
+                // so we have to convert the Partial<Assignment> (which is assignmentData[rowIndex])
+                // to `any`, then we can set the property
+                (assignmentData[rowIndex] as any)[field] = data;
             });
         });
 
@@ -380,7 +383,7 @@ class Aspen {
         // the following requests will be in relation to that class (even though
         // the requests don't have information relating to that class)
         const form = new this.classPage.FormData(
-            this.classPage.document.querySelector("[name='classListForm']")
+            this.classPage.document.querySelector("[name='classListForm']") as HTMLFormElement
         );
 
         form.set("userEvent", "2100"); // userEvent ID for getting class info (i think)
@@ -396,14 +399,20 @@ class Aspen {
      * @returns The student's current schedule, as a JSON
      */
     async getSchedule() {
+        // this function needs to send an initial request to get Aspen to be happy loading the schedule
+        // we want the 'matrix' version of the schedule, as it's slightly easier to parse and has some
+        // more info
+        await this.api.get("studentScheduleContextList.do?navkey=myInfo.sch.list")
+
         const schedulePage = await this.api.get(
-            "studentScheduleContextList.do?navkey=myInfo.sch.list"
+            "studentScheduleMatrix.do?navkey=myInfo.sch.matrix"
         );
+
         const page = new JSDOM(schedulePage.body).window;
 
         // create an initial objetc, where each key is a day and the value is an array of the
         // classes on that day
-        const schedule = {
+        const schedule: Partial<Schedule> = {
             currentDay: null,
             currentClass: null,
         };
@@ -415,11 +424,11 @@ class Aspen {
         );
         headers.forEach(header => {
             // for whatever reason, innerText isn't implemented in JSDOM
-            const dayID = header.textContent.trim().split(/\s/g)[0]; // the format is 'ID - Name', ex: "M - Monday"
+            const dayID = header.textContent?.trim().split(/\s/g)[0] as Day; // the format is 'ID - Name', ex: "M - Monday"
 
             // if it's the current day (specified by the element having a red border), set that
             // in the schedule object
-            if (header.getAttribute("style").includes("red")) {
+            if (header.getAttribute("style")?.includes("red")) {
                 schedule.currentDay = dayID;
             }
 
@@ -448,7 +457,7 @@ class Aspen {
         delete safeSchedule.currentClass;
 
         for (let i = 0; i < Object.keys(safeSchedule).length; i++) {
-            const day = Object.keys(safeSchedule)[i]; // the code for the day
+            const day = Object.keys(safeSchedule)[i] as Day; // the code for the day
 
             const dayClasses = page.document.querySelectorAll(
                 `.listGridFixed td:nth-child(${i + 2}) td`
@@ -456,27 +465,30 @@ class Aspen {
             // for each of the classes, fill out the data
             for (const classElem of dayClasses) {
                 const rawClassData = classElem.innerHTML.trim().split("<br>");
-                const classData = {};
+                // this is a Partial<Period> (or just a Period), but we once again need to make it
+                // `any` until it has been filled, because otherwise typescript will get angry
+                const periodData: any = {};
+
                 // this loop fills the data into the classData variable, with the respective keys
                 classDataKeys.forEach((key, index) => {
-                    classData[key] = rawClassData[index];
+                    periodData[key] = rawClassData[index];
                 });
 
                 // if it's the current period, set it in classData and schedule (it'll have a red
                 // border if it's the current period)
                 if (
-                    classElem.parentElement.parentElement.parentElement.getAttribute(
+                    classElem.parentElement?.parentElement?.parentElement?.getAttribute(
                         "style"
                     )
                 ) {
-                    classData["currentPeriod"] = true;
-                    schedule.currentClass = classData;
+                    periodData["currentPeriod"] = true;
+                    schedule.currentClass = periodData;
                 } else {
-                    classData["currentPeriod"] = false;
+                    periodData["currentPeriod"] = false;
                 }
 
                 // add the class to the main schedule object (for the current day)
-                schedule[day].push(classData);
+                (schedule[day] as Period[]).push(periodData);
             }
         }
 

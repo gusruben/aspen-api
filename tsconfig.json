@@ -1,9 +1,11 @@
 {
+    "extends": "@tsconfig/node18/tsconfig.json",
+
     "compilerOptions": {
-        "module": "NodeNext",
-        "target": "ES2022",
         "declaration": true,
         "outDir": "./dist",
+
+        "strictPropertyInitialization": false,
     },
     "include": ["./src/**/*"]
 }

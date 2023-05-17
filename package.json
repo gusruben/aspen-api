@@ -1,29 +1,29 @@
 {
-  "name": "aspen-api",
-  "version": "1.0.0",
-  "description": "An API client library for interacting with Aspen, a Student Information System (SIS) created by Follett and used in schools around the U.S.",
-  "exports": "./src/index.js",
-  "type": "module",
-  "scripts": {
-    "lint": "prettier --check .",
-    "format": "prettier --write ."
-  },
-  "author": "gusruben",
-  "license": "ISC",
-  "dependencies": {
-    "@types/jsdom": "^21.1.1",
-    "@types/tough-cookie": "^4.0.2",
-    "axios": "^1.2.2",
-    "got": "^12.6.0",
-    "header-generator": "^2.1.7",
-    "jsdom": "^20.0.3",
-    "tough-cookie": "^4.1.2"
-  },
-  "devDependencies": {
-    "prettier": "2.8.8",
-    "typescript": "^5.0.4"
-  },
-  "engines": {
-    "node": ">=16"
-  }
+	"name": "aspen-api",
+	"version": "1.0.0",
+	"description": "An API client library for interacting with Aspen, a Student Information System (SIS) created by Follett and used in schools around the U.S.",
+	"exports": "./src/index.js",
+	"type": "module",
+	"scripts": {
+		"lint": "prettier --check .",
+		"format": "prettier --write ."
+	},
+	"author": "gusruben",
+	"license": "ISC",
+	"dependencies": {
+		"@types/jsdom": "^21.1.1",
+		"@types/tough-cookie": "^4.0.2",
+		"axios": "^1.2.2",
+		"got": "^12.6.0",
+		"header-generator": "^2.1.7",
+		"jsdom": "^20.0.3",
+		"tough-cookie": "^4.1.2"
+	},
+	"devDependencies": {
+		"prettier": "2.8.8",
+		"typescript": "^5.0.4"
+	},
+	"engines": {
+		"node": ">=16"
+	}
 }

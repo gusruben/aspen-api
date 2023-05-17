@@ -477,14 +477,12 @@ class Aspen {
                 // if it's the current period, set it in classData and schedule (it'll have a red
                 // border if it's the current period)
                 if (
-                    classElem.parentElement?.parentElement?.parentElement?.getAttribute(
-                        "style"
-                    )
+                    classElem.parentElement?.parentElement?.parentElement?.parentElement?.style.border
                 ) {
-                    periodData["currentPeriod"] = true;
+                    periodData.currentPeriod = true;
                     schedule.currentClass = periodData;
                 } else {
-                    periodData["currentPeriod"] = false;
+                    periodData.currentPeriod = false;
                 }
 
                 // add the class to the main schedule object (for the current day)

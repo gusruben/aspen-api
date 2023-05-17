@@ -8,7 +8,7 @@
 		"lint": "prettier --check .",
 		"format": "prettier --write ."
 	},
-	"author": "gusruben",
+	"author": "Gus Ruben <gusruben@protonmail.com>",
 	"license": "ISC",
 	"dependencies": {
 		"@types/jsdom": "^21.1.1",

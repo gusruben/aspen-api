@@ -372,37 +372,6 @@ class Aspen {
 	}
 
 	/**
-	 * Requests a class's page to switch Aspen's 'focus'
-	 * @param {String} token the id ('token') of the class
-	 * @returns {String} the HTML of the class's page
-	 */
-	async #loadClass(token: string): Promise<string> {
-		// class list page has a form on it to select the class
-		if (!this.classPage) {
-			const resp = await this.api.get(
-				"portalClassList.do?navkey=academics.classes.list"
-			);
-			this.classPage = new JSDOM(resp.body).window;
-		}
-
-		// sending this form with the class token 'selects' the class, so that
-		// the following requests will be in relation to that class (even though
-		// the requests don't have information relating to that class)
-		const form = new this.classPage.FormData(
-			this.classPage.document.querySelector(
-				"[name='classListForm']"
-			) as HTMLFormElement
-		);
-
-		form.set("userEvent", "2100"); // userEvent ID for getting class info (i think)
-		form.set("userParam", token); // userParam has the class token
-		const params = Object.fromEntries(form);
-
-		return (await this.api.post("portalClassList.do", { form: params }))
-			.body;
-	}
-
-	/**
 	 * Gets the current schedule of the current student
 	 * @returns {Promise<Schedule>} The student's current schedule, as a JSON
 	 */
@@ -502,6 +471,37 @@ class Aspen {
 		}
 
 		return schedule as Schedule;
+	}
+
+	/**
+	 * Requests a class's page to switch Aspen's 'focus'
+	 * @param {String} token the id ('token') of the class
+	 * @returns {String} the HTML of the class's page
+	 */
+	async #loadClass(token: string): Promise<string> {
+		// class list page has a form on it to select the class
+		if (!this.classPage) {
+			const resp = await this.api.get(
+				"portalClassList.do?navkey=academics.classes.list"
+			);
+			this.classPage = new JSDOM(resp.body).window;
+		}
+
+		// sending this form with the class token 'selects' the class, so that
+		// the following requests will be in relation to that class (even though
+		// the requests don't have information relating to that class)
+		const form = new this.classPage.FormData(
+			this.classPage.document.querySelector(
+				"[name='classListForm']"
+			) as HTMLFormElement
+		);
+
+		form.set("userEvent", "2100"); // userEvent ID for getting class info (i think)
+		form.set("userParam", token); // userParam has the class token
+		const params = Object.fromEntries(form);
+
+		return (await this.api.post("portalClassList.do", { form: params }))
+			.body;
 	}
 }
 

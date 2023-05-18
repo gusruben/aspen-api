@@ -6,7 +6,7 @@ This package is a work-in-progress. Some features may be missing or not fully fl
 
 ## Usage
 
-You can access Aspen through a single class. You need to initiate it using your 'district ID.' All Aspen instances are hosted at a subdomain of <myfollett.com>, though some districts might  have students use a different domain, for example, <aspen.dcps.dc.gov> -> <dcps.myfollett.com>.
+You can access Aspen through a single class. You need to initiate it using your 'district ID.' All Aspen instances are hosted at a subdomain of [myfollett.com](https://myfollett.com), though some districts might  have students use a different domain, for example, [aspen.dcps.dc.gov](https://aspen.dcps.dc.gov) -> [dcps.myfollett.com](https://dcps.myfollett.com).
 
 ```ts
 import Aspen from "aspen-api";

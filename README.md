@@ -4,6 +4,24 @@
 
 This package is a work-in-progress. Some features may be missing or not fully fleshed-out!
 
+## Installation
+
+`aspen-api` can be installed from NPM with your node package manager of choice:
+
+```sh
+npm install aspen-api
+```
+
+```sh
+yarn install aspen-api
+```
+
+```sh
+pnpm install aspen-api
+```
+
+> Note: `aspen-api` is [ESM](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules), rather than CommonJS. That means that if you want to use it in a project written in CommonJS, you need to either convert your project to ESM, or use the [`import()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) function.
+
 ## Usage
 
 You can access Aspen through a single class. You need to initiate it using your 'district ID.' All Aspen instances are hosted at a subdomain of [myfollett.com](https://myfollett.com), though some districts might  have students use a different domain, for example, [aspen.dcps.dc.gov](https://aspen.dcps.dc.gov) -> [dcps.myfollett.com](https://dcps.myfollett.com).

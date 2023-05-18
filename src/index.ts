@@ -7,7 +7,7 @@ import {
 	PRESETS,
 } from "header-generator";
 import { DOMWindow } from "jsdom";
-import { Assignment, ClassInfo, Day, Period, Schedule } from "./types.js";
+import { Assignment, ClassData, ClassInfo, Day, Period, Schedule } from "./types.js";
 
 /** A class representing an Aspen session */
 class Aspen {
@@ -20,12 +20,12 @@ class Aspen {
 	 * Creates the Aspen session object
 	 * @param {String} id The ID of the Aspen instance to access, in {id}.myfollett.com
 	 */
-	constructor(id: string, cookies: Cookie[] = []) {
+	constructor(id: string, cookies?: Cookie[]) {
 		this.instanceId = id;
 		this.cookieJar = new CookieJar();
 
 		// if cookies is set, then use that to fill the cookie jar
-		for (let cookie of cookies) {
+		for (let cookie of cookies || []) {
 			this.cookieJar.setCookieSync(cookie, `https://${id}.myfollett.com`);
 		}
 
@@ -86,9 +86,9 @@ class Aspen {
 	/**
 	 * Gets a list of all the classes, along with data about them.
 	 *
-	 * @returns {Array} The array of classes
+	 * @returns {Promise<ClassInfo[]>} The array of classes
 	 */
-	async getClasses(): Promise<any[]> {
+	async getClasses(): Promise<ClassInfo[]> {
 		const resp = await this.api.get(
 			"portalClassList.do?navkey=academics.classes.list"
 		);
@@ -158,9 +158,9 @@ class Aspen {
 	/**
 	 * Gets data about a class, including grades.
 	 * @param {String} token The token of the class (similar to an ID), from the getClasses() function
-	 * @returns An object containing data about the class
+	 * @returns {Promise<ClassData>} An object containing data about the class
 	 */
-	async getClass(token: string) {
+	async getClass(token: string): Promise<ClassData> {
 		// after sending this request, all of the following requests will
 		// automatically relate to the class, even though they don't have the token
 		const html = await this.#loadClass(token);
@@ -283,9 +283,9 @@ class Aspen {
 	/**
 	 * Gets the list of assignments from a class.
 	 * @param {String} token The token of the class (similar to an ID), from the getClasses() function
-	 * @returns A list containing the assignments of the class
+	 * @returns {Promise<Assignment[]>} A list containing the assignments of the class
 	 */
-	async getAssignments(token: string) {
+	async getAssignments(token: string): Promise<Assignment[]> {
 		// after sending this request, all of the following requests will
 		// automatically relate to the class, even though they don't have the token
 		await this.#loadClass(token);
@@ -368,7 +368,7 @@ class Aspen {
 			});
 		});
 
-		return assignmentData;
+		return assignmentData as Assignment[];
 	}
 
 	/**
@@ -404,9 +404,9 @@ class Aspen {
 
 	/**
 	 * Gets the current schedule of the current student
-	 * @returns The student's current schedule, as a JSON
+	 * @returns {Promise<Schedule>} The student's current schedule, as a JSON
 	 */
-	async getSchedule() {
+	async getSchedule(): Promise<Schedule> {
 		// this function needs to send an initial request to get Aspen to be happy loading the schedule
 		// we want the 'matrix' version of the schedule, as it's slightly easier to parse and has some
 		// more info
@@ -501,7 +501,7 @@ class Aspen {
 			}
 		}
 
-		return schedule;
+		return schedule as Schedule;
 	}
 }
 

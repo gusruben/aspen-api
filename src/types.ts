@@ -1,28 +1,63 @@
 export type Term = "Q1" | "Q2" | "Q3" | "Q4" | "S1" | "S2" | "FY";
 
 // this is for the short info on classes obtained from the class list
+// (from getClasses)
 export interface ClassInfo {
-	token: string;
-	name: string;
-	course: string;
-	term: Term;
-	teacher: string;
-	email: string;
-	classroom: string;
-	letterGrade: string;
-	grade: number;
-	absent: number;
-	tardy: number;
-	dismissed: number;
+	token: string; // the 'token' for the class, used as an ID to get more data about it
+	name: string; // the name of the class
+	course: string; // the course code
+	term: Term; // what quarter / semester(s) it takes up
+	teacher: string; // the teacher's name
+	email: string; // the email of the teacher
+	classroom: string; // the room number (if provided)
+	letterGrade: string; // the student's letter grade in the class (A, B, C, etc)
+	grade: number; // the student's grade from 1-100
+	absent: number; // student's absences from that class
+	tardy: number; // student's tardies in that class
+	dismissed: number; // student's dismissed absences / tardies in that class
 }
 
 // this is more specific class data, when you pull info on a specific class
+// (from getClass)
+/* example:
+{
+  attendance: {
+	absent: {
+		1: ... // number of absences in quarter 1
+		2: ...
+		3: ...
+		4: ...
+	}
+    tardy: { ... },
+    dismissed: { '... }
+  },
+  grades: {
+    '1': {
+      weights: { // weights for each of the grade categories
+		assessments: 50,
+		participation: 30,
+		practiceAndApplication: 20
+	  },
+      assessments: 100, // grade for assessments
+      participation: 100,
+      practiceAndApplication: 100,
+      total: 100
+    },
+    2: { ... },
+    3: { ... },
+    4: { ... },
+  },
+  teacher: 'Last, First',
+  email: 'foo@bar.com',
+  room: 'A123'
+}
+*/
 export interface ClassData {
-	attendance: Attendance;
-	grades: Record<1 | 2 | 3 | 4, TermGrades>;
-	teacher: string;
-	email: string;
-	room: string;
+	attendance: Attendance; // data about the student's attendance
+	grades: Record<1 | 2 | 3 | 4, TermGrades>; // grades for each term
+	teacher: string; // teacher's name
+	email: string; // teacher's email
+	room: string; // room number
 }
 
 // attendance. this is part of ClassData
@@ -46,11 +81,14 @@ export interface Assignment {
 	name: string;
 	dateAssigned: Date;
 	dateDue: Date;
+	// schedule: days you have that class. This isn't super relevant,
+	// but otherwise I'd just be throwing away data
+	// ex: "M,W,F1" (see `Day` type below)
 	schedule: string;
-	score: string | "Ungraded";
-	points: number | "Ungraded";
-	grade: number | "Ungraded";
-	feedback: string;
+	score: string | "Ungraded"; // string score, like: "9.0 / 10.0"
+	points: number | "Ungraded"; // points gained (first number in that string score)
+	grade: number | "Ungraded"; // grade out of 100
+	feedback: string; // any teacher feedback
 }
 
 // schedule stuff
@@ -65,9 +103,9 @@ type ScheduleData = {
 export type Schedule = ScheduleData & ScheduleDays;
 
 export interface Period {
-	course: string;
-	name: string;
-	teacher: string;
-	room: string;
-	currentPeriod: boolean;
+	course: string; // course code
+	name: string; // course name
+	teacher: string; // teacher name (Last, First)
+	room: string; // room number
+	currentPeriod: boolean; // if it's the current period or not
 }

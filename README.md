@@ -112,4 +112,4 @@ Gets the current schedule of the current student.
 
 ## Types
 
-See [`types.ts`](src/types.ts).
+See [`types.ts`](https://github.com/gusruben/aspen-api/blob/main/src/types.ts).

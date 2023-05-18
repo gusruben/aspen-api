@@ -503,6 +503,14 @@ class Aspen {
 		return (await this.api.post("portalClassList.do", { form: params }))
 			.body;
 	}
+
+	/**
+	 * Gets a list of all the stored cookies
+	 * @returns {Promise<Cookie[]>} The cookies that Aspen is using
+	 */
+	async getCookies(): Promise<Cookie[]>  {
+		return await this.cookieJar.getCookies(`https://${this.instanceId}.myfollett.com/aspen`);
+	}
 }
 
 export default Aspen;

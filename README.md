@@ -110,6 +110,12 @@ const mathAssignments = await getAssignments(token);
 
 Gets the current schedule of the current student.
 
+#### `getCookies()`
+
+**Returns: `Promise<Cookie[]>`**
+
+Gets a list of all the stored cookies.
+
 ## Types
 
 See [`types.ts`](https://github.com/gusruben/aspen-api/blob/main/src/types.ts).

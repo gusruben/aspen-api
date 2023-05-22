@@ -1,4 +1,4 @@
-import got, { Got } from "got";
+import got, { Got, RequestError } from "got";
 import { Cookie, CookieJar } from "tough-cookie";
 import { JSDOM } from "jsdom";
 import {
@@ -75,12 +75,29 @@ class Aspen {
 		// create form parameters for the login form (converted to a raw JSON object)
 		const loginParams = Object.fromEntries(formData);
 
-		// this doesn't need to do anything with the output, server-side
+		// we don't need to do anything with the output of this, server-side
 		// aspen will give the JSESSIONID cookie more permissions and stuff
-		await this.api.post("logon.do", {
-			cookieJar: this.cookieJar,
-			form: loginParams,
-		});
+		let res;
+		try {
+			res = await this.api.post("logon.do", {
+				cookieJar: this.cookieJar,
+				form: loginParams,
+			});
+		} catch (e) {
+			if (e instanceof RequestError) {
+				throw new Error("Unable to connect to Aspen")
+			} else {
+				throw e;
+			}
+		}
+
+		// check if the login failed for any reason, this doesn't need full JSDOM
+		// parsing, we can just use `.includes()`
+		if (res.body.includes("Invalid login.")) {
+			throw new Error("Invalid Aspen username or password")
+		} else if (res.body.includes("session has expired")) {
+			throw new Error("Invalid Aspen session")
+		}
 	}
 
 	/**

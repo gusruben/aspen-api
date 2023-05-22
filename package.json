@@ -9,7 +9,7 @@
 		"build": "tsc",
 		"lint": "prettier --check .",
 		"format": "prettier --write .",
-		"preversion": "npm run build"
+		"prepare": "npm run build"
 	},
 	"author": "Gus Ruben <gusruben@protonmail.com>",
 	"license": "ISC",

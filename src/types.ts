@@ -1,3 +1,4 @@
+// general stuff
 export type Term = "Q1" | "Q2" | "Q3" | "Q4" | "S1" | "S2" | "FY";
 
 // this is for the short info on classes obtained from the class list

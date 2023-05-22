@@ -29,7 +29,7 @@ class Aspen {
 			this.cookieJar.setCookieSync(cookie, `https://${id}.myfollett.com`);
 		}
 
-		// initialize Got http session ('instance), this  just repeats the same config automatically
+		// initialize Got http session ('instance'), this  just repeats the same config automatically
 		this.api = got.extend({
 			prefixUrl: `https://${id}.myfollett.com/aspen`,
 			headers: new HeaderGenerator(

@@ -95,7 +95,7 @@ class Aspen {
 		// parsing, we can just use `.includes()`
 		if (res.body.includes("Invalid login.")) {
 			throw new Error("Invalid Aspen username or password")
-		} else if (res.body.includes("session has expired")) {
+		} else if (res.body.includes("Not logged on")) {
 			throw new Error("Invalid Aspen session")
 		}
 	}

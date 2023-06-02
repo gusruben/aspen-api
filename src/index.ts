@@ -1,4 +1,4 @@
-import got, { Got, HTTPError, RequestError } from "got";
+import got, { Got, HTTPError, RequestError, Response } from "got";
 import { Cookie, CookieJar } from "tough-cookie";
 import { JSDOM } from "jsdom";
 import {
@@ -77,7 +77,7 @@ class Aspen {
 
 		// we don't need to do anything with the output of this, server-side
 		// aspen will give the JSESSIONID cookie more permissions and stuff
-		let res;
+		let res: Response<string>;
 		try {
 			res = await this.api.post("logon.do", {
 				cookieJar: this.cookieJar,

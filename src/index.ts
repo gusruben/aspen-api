@@ -7,7 +7,7 @@ import {
 	PRESETS,
 } from "header-generator";
 import { DOMWindow } from "jsdom";
-import { Assignment, ClassData, ClassInfo, Day, Period, Schedule } from "./types.js";
+import { AspenApiError, Assignment, ClassData, ClassInfo, Day, Period, Schedule } from "./types.js";
 
 /** A class representing an Aspen session */
 class Aspen {
@@ -85,9 +85,9 @@ class Aspen {
 			});
 		} catch (e) {
 			if (e instanceof RequestError) {
-				throw new Error("Unable to connect to Aspen")
+				throw new Error(AspenApiError.ConnectionError)
 			} else if (e instanceof HTTPError && e.code == "ERR_NON_2XX_3XX_RESPONSE") {
-				throw new Error("Aspen returned 500 Server Error")
+				throw new Error(AspenApiError.Generic500Error)
 			} else {
 				throw e;
 			}
@@ -96,9 +96,9 @@ class Aspen {
 		// check if the login failed for any reason, this doesn't need full JSDOM
 		// parsing, we can just use `.includes()`
 		if (res.body.includes("Invalid login.")) {
-			throw new Error("Invalid Aspen username or password")
+			throw new Error(AspenApiError.InvalidLoginError)
 		} else if (res.body.includes("Not logged on")) {
-			throw new Error("Invalid Aspen session")
+			throw new Error(AspenApiError.InvalidSessionError)
 		}
 	}
 
@@ -504,6 +504,11 @@ class Aspen {
 				"portalClassList.do?navkey=academics.classes.list"
 			);
 			this.classPage = new JSDOM(resp.body).window;
+		}
+
+		// if the given class token isn't found in the page, it's unknown / invalid
+		if (!this.classPage.document.body.innerHTML.includes(token)) {
+			throw new Error(AspenApiError.UnknownClassError);
 		}
 
 		// sending this form with the class token 'selects' the class, so that

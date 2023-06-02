@@ -110,3 +110,11 @@ export interface Period {
 	room: string; // room number
 	currentPeriod: boolean; // if it's the current period or not
 }
+
+export enum AspenApiError {
+	ConnectionError = "Unable to connect to Aspen",
+	Generic500Error = "Aspen returned 500 Internal Server Error",
+	InvalidLoginError = "Invalid Aspen username or password",
+	InvalidSessionError = "Invalid Aspen Session",
+	UnknownClassError = "Invalid Class Code",
+}

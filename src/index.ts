@@ -1,4 +1,4 @@
-import got, { Got, RequestError } from "got";
+import got, { Got, HTTPError, RequestError } from "got";
 import { Cookie, CookieJar } from "tough-cookie";
 import { JSDOM } from "jsdom";
 import {
@@ -86,6 +86,8 @@ class Aspen {
 		} catch (e) {
 			if (e instanceof RequestError) {
 				throw new Error("Unable to connect to Aspen")
+			} else if (e instanceof HTTPError && e.code == "ERR_NON_2XX_3XX_RESPONSE") {
+				throw new Error("Aspen returned 500 Server Error")
 			} else {
 				throw e;
 			}

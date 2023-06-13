@@ -29,5 +29,7 @@
 	"engines": {
 		"node": ">=16"
 	},
-	"files": [ "dist" ]
+	"files": [
+		"dist"
+	]
 }

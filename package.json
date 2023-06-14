@@ -1,6 +1,6 @@
 {
 	"name": "aspen-api",
-	"version": "1.0.7",
+	"version": "1.1.0",
 	"description": "An API client library for interacting with Aspen, a Student Information System (SIS) created by Follett and used in schools around the U.S.",
 	"exports": "./dist/index.js",
 	"types": "./dist/index.d.ts",

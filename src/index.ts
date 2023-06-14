@@ -111,7 +111,7 @@ class Aspen {
 		const resp = await this.api.get(
 			"portalClassList.do?navkey=academics.classes.list"
 		);
-		this.classPage = new JSDOM(resp.body).window;
+		const classPage = new JSDOM(resp.body).window;
 
 		// which values in the table row correspond to what fields
 		const classDataFields: (keyof ClassInfo | null)[] = [
@@ -130,7 +130,7 @@ class Aspen {
 		];
 
 		const classListData: ClassInfo[] = []; // output list with all the classes
-		for (const classRow of this.classPage.document.querySelectorAll(
+		for (const classRow of classPage.document.querySelectorAll(
 			"#dataGrid .listCell"
 		)) {
 			// this should be a Partial<ClassInfo>, but when I do that, I get some really weird errors
@@ -499,23 +499,21 @@ class Aspen {
 	 */
 	async #loadClass(token: string): Promise<string> {
 		// class list page has a form on it to select the class
-		if (!this.classPage) {
-			const resp = await this.api.get(
-				"portalClassList.do?navkey=academics.classes.list"
-			);
-			this.classPage = new JSDOM(resp.body).window;
-		}
+		const resp = await this.api.get(
+			"portalClassList.do?navkey=academics.classes.list"
+		);
+		const classPage = new JSDOM(resp.body).window;
 
 		// if the given class token isn't found in the page, it's unknown / invalid
-		if (!this.classPage.document.body.innerHTML.includes(token)) {
+		if (!classPage.document.body.innerHTML.includes(token)) {
 			throw new Error(AspenApiError.UnknownClassError);
 		}
 
 		// sending this form with the class token 'selects' the class, so that
 		// the following requests will be in relation to that class (even though
 		// the requests don't have information relating to that class)
-		const form = new this.classPage.FormData(
-			this.classPage.document.querySelector(
+		const form = new classPage.FormData(
+			classPage.document.querySelector(
 				"[name='classListForm']"
 			) as HTMLFormElement
 		);

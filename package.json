@@ -20,7 +20,9 @@
 		"got": "^12.6.0",
 		"header-generator": "^2.1.7",
 		"jsdom": "^20.0.3",
-		"tough-cookie": "^4.1.2"
+		"tough-cookie": "^4.1.2",
+		"word-wrap": "^1.2.5",
+		"ws": "^8.18.1"
 	},
 	"devDependencies": {
 		"prettier": "2.8.8",
